@@ -11,13 +11,19 @@ const COLORS: [Color; 6] = [
     Color::Magenta,
     Color::Cyan,
 ];
-const AXIS_COLOR: Color = Color::White;
+pub const AXIS_COLOR: Color = Color::White;
 
 pub fn get_color(index: usize) -> Color {
     COLORS[index % COLORS.len()]
 }
 
-pub fn draw_axes(canvas: &mut [Vec<Option<Color>>], x_min: f64, x_max: f64, y_min: f64, y_max: f64) {
+pub fn draw_axes(
+    canvas: &mut [Vec<Option<Color>>],
+    x_min: f64,
+    x_max: f64,
+    y_min: f64,
+    y_max: f64,
+) {
     if x_min <= 0.0 && x_max >= 0.0 {
         let x_zero = ((0.0 - x_min) / (x_max - x_min) * (WIDTH - 1) as f64).round() as usize;
         if x_zero < WIDTH {

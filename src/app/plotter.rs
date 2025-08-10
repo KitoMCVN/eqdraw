@@ -6,46 +6,169 @@ use meval::{Context, Expr};
 use regex::Regex;
 use std::error::Error;
 
-pub fn run(args: PlotArgs) -> Result<(), Box<dyn Error>> {
-    let mut canvas: Vec<Vec<Option<Color>>> = vec![vec![None; WIDTH]; HEIGHT];
-    let mut context = create_math_context()?;
+const DEFAULT_X_MIN: f64 = -10.0;
+const DEFAULT_X_MAX: f64 = 10.0;
+const DEFAULT_Y_MIN: f64 = -10.0;
+const DEFAULT_Y_MAX: f64 = 10.0;
 
-    // Regex to find √ followed by a variable/number and wrap it in sqrt()
-    // e.g., √x -> sqrt(x) or √25 -> sqrt(25)
+struct BoundingBox {
+    x_min: f64,
+    x_max: f64,
+    y_min: f64,
+    y_max: f64,
+}
+
+pub fn run(args: PlotArgs) -> Result<(), Box<dyn Error>> {
+    let context = create_math_context()?;
     let re_bare_sqrt = Regex::new(r"√([a-zA-Z_][a-zA-Z0-9_]*|[0-9]*\.?[0-9]+)")?;
 
-    for (i, query) in args.queries.iter().enumerate() {
-        if let Some(equation) = query.strip_prefix("y=") {
-            // First, handle bare cases like √x
-            let eq_pass1 = re_bare_sqrt.replace_all(equation, "sqrt($1)");
-            // Then, handle any remaining √, which must have been followed by parentheses, e.g., √(x+1)
-            let processed_equation = eq_pass1.replace('√', "sqrt");
+    let equation_bounds = find_equation_bounds(&args.queries, &context)?;
 
+    let (x_min, x_max, y_min, y_max) = determine_ranges(
+        args.x_min,
+        args.x_max,
+        args.y_min,
+        args.y_max,
+        equation_bounds,
+    );
+
+    let mut canvas: Vec<Vec<Option<Color>>> = vec![vec![None; WIDTH]; HEIGHT];
+
+    for (i, query) in args.queries.iter().enumerate() {
+        let color = get_color(i);
+        if let Some(equation) = query.strip_prefix("y=") {
+            let eq_pass1 = re_bare_sqrt.replace_all(equation, "sqrt($1)");
+            let processed_equation = eq_pass1.replace('√', "sqrt");
             let expr: Expr = processed_equation.parse()?;
-            let color = get_color(i);
             plot_equation(
                 &mut canvas,
                 &expr,
-                &mut context,
+                &context,
                 color,
-                args.x_min,
-                args.x_max,
-                args.y_min,
-                args.y_max,
+                x_min,
+                x_max,
+                y_min,
+                y_max,
             )?;
         }
     }
 
-    draw_axes(&mut canvas, args.x_min, args.x_max, args.y_min, args.y_max);
+    draw_axes(&mut canvas, x_min, x_max, y_min, y_max);
     print_canvas(&canvas, &args.queries);
 
     Ok(())
 }
 
+fn find_equation_bounds(
+    queries: &[String],
+    context_template: &Context,
+) -> Result<Option<BoundingBox>, Box<dyn Error>> {
+    let mut finite_points = Vec::new();
+    let sample_points = (-100..=100).map(|i| i as f64 * 0.1); // -10 to 10, step 0.1
+
+    for query in queries {
+        if let Some(equation) = query.strip_prefix("y=") {
+            let expr: Expr = equation.parse()?;
+            for x in sample_points.clone() {
+                let mut context = context_template.clone();
+                context.var("x", x);
+                if let Ok(y) = expr.eval_with_context(&mut context) {
+                    if y.is_finite() {
+                        finite_points.push((x, y));
+                    }
+                }
+            }
+        }
+    }
+
+    if finite_points.is_empty() {
+        return Ok(None);
+    }
+
+    let mut x_min = finite_points[0].0;
+    let mut x_max = finite_points[0].0;
+    let mut y_min = finite_points[0].1;
+    let mut y_max = finite_points[0].1;
+
+    for (x, y) in &finite_points[1..] {
+        x_min = x_min.min(*x);
+        x_max = x_max.max(*x);
+        y_min = y_min.min(*y);
+        y_max = y_max.max(*y);
+    }
+
+    Ok(Some(BoundingBox { x_min, x_max, y_min, y_max }))
+}
+
+fn determine_ranges(
+    arg_x_min: Option<f64>,
+    arg_x_max: Option<f64>,
+    arg_y_min: Option<f64>,
+    arg_y_max: Option<f64>,
+    bounds: Option<BoundingBox>,
+) -> (f64, f64, f64, f64) {
+    let mut x_min = arg_x_min;
+    let mut x_max = arg_x_max;
+    let mut y_min = arg_y_min;
+    let mut y_max = arg_y_max;
+
+    if let Some(b) = bounds {
+        if x_min.is_none() {
+            x_min = Some(b.x_min - (b.x_max - b.x_min).abs() * 0.1);
+        }
+        if x_max.is_none() {
+            x_max = Some(b.x_max + (b.x_max - b.x_min).abs() * 0.1);
+        }
+        if y_min.is_none() {
+            y_min = Some(b.y_min - (b.y_max - b.y_min).abs() * 0.1);
+        }
+        if y_max.is_none() {
+            y_max = Some(b.y_max + (b.y_max - b.y_min).abs() * 0.1);
+        }
+    }
+
+    let mut final_x_min = x_min.unwrap_or(DEFAULT_X_MIN);
+    let mut final_x_max = x_max.unwrap_or(DEFAULT_X_MAX);
+    let mut final_y_min = y_min.unwrap_or(DEFAULT_Y_MIN);
+    let mut final_y_max = y_max.unwrap_or(DEFAULT_Y_MAX);
+
+    let x_span = final_x_max - final_x_min;
+    let y_span = final_y_max - final_y_min;
+
+    let desired_y_span = x_span / 2.0; 
+
+    if y_span < desired_y_span {
+        let y_center = (final_y_max + final_y_min) / 2.0;
+        final_y_min = y_center - desired_y_span / 2.0;
+        final_y_max = y_center + desired_y_span / 2.0;
+    } else {
+        let x_center = (final_x_max + final_x_min) / 2.0;
+        let desired_x_span = y_span * 2.0;
+        final_x_min = x_center - desired_x_span / 2.0;
+        final_x_max = x_center + desired_x_span / 2.0;
+    }
+
+    final_x_min = final_x_min.min(0.0);
+    final_x_max = final_x_max.max(0.0);
+    final_y_min = final_y_min.min(0.0);
+    final_y_max = final_y_max.max(0.0);
+
+    if final_x_min == final_x_max {
+        final_x_min -= 1.0;
+        final_x_max += 1.0;
+    }
+    if final_y_min == final_y_max {
+        final_y_min -= 1.0;
+        final_y_max += 1.0;
+    }
+
+    (final_x_min, final_x_max, final_y_min, final_y_max)
+}
+
 fn plot_equation(
     canvas: &mut [Vec<Option<Color>>],
     expr: &Expr,
-    context: &mut Context,
+    context_template: &Context,
     color: Color,
     x_min: f64,
     x_max: f64,
@@ -55,9 +178,10 @@ fn plot_equation(
     let mut last_point = None;
 
     for i in 0..WIDTH {
+        let mut context = context_template.clone();
         let x = x_min + (i as f64 / (WIDTH - 1) as f64) * (x_max - x_min);
         context.var("x", x);
-        let y = expr.eval_with_context(&mut *context)?;
+        let y = expr.eval_with_context(&mut context)?;
 
         if y.is_finite() {
             let j = ((y_max - y) / (y_max - y_min) * (HEIGHT - 1) as f64).round() as isize;

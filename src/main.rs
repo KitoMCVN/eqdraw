@@ -1,11 +1,6 @@
 use clap::Parser;
 use eqdraw::{PlotArgs, run};
 
-const DEFAULT_X_MIN: f64 = -10.0;
-const DEFAULT_X_MAX: f64 = 10.0;
-const DEFAULT_Y_MIN: f64 = -1.2;
-const DEFAULT_Y_MAX: f64 = 1.2;
-
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
@@ -30,10 +25,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let args = PlotArgs {
         queries: cli.queries,
-        x_min: cli.xmin.unwrap_or(DEFAULT_X_MIN),
-        x_max: cli.xmax.unwrap_or(DEFAULT_X_MAX),
-        y_min: cli.ymin.unwrap_or(DEFAULT_Y_MIN),
-        y_max: cli.ymax.unwrap_or(DEFAULT_Y_MAX),
+        x_min: cli.xmin,
+        x_max: cli.xmax,
+        y_min: cli.ymin,
+        y_max: cli.ymax,
     };
 
     run(args)
