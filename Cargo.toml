@@ -2,6 +2,18 @@
 name = "eqdraw"
 version = "0.1.0"
 edition = "2024"
+description = "Plot EQUATIONS directly in your TERMINAL"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/KitoMCVN/eqdraw"
+homepage = "https://github.com/KitoMCVN/eqdraw"
+documentation = "https://docs.rs/eqdraw"
+keywords = ["cli", "plot", "equation", "graph", "terminal"]
+categories = ["command-line-utilities", "science", "visualization"]
+
+[[bin]]
+name = "eqdraw"
+path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
