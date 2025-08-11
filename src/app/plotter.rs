@@ -20,9 +20,14 @@ struct BoundingBox {
 
 pub fn run(args: PlotArgs) -> Result<(), Box<dyn Error>> {
     let context = create_math_context()?;
-    let re_bare_sqrt = Regex::new(r"√([a-zA-Z_][a-zA-Z0-9_]*|[0-9]*\.?[0-9]+)")?;
+    let re_bare_sqrt = Regex::new(r"√([a-zA-Z_][a-zA-Z0-9_]*|-?[0-9]*\.?[0-9]+)")?;
 
     let equation_bounds = find_equation_bounds(&args.queries, &context)?;
+
+    if equation_bounds.is_none() && args.x_min.is_none() && args.x_max.is_none() {
+        eprintln!("Could not automatically determine the plot range for the given equation(s).\nThe function might be undefined in the default sampling range [-10, 10].\nPlease specify the range manually using --xmin and --xmax.");
+        return Ok(())
+    }
 
     let (x_min, x_max, y_min, y_max) = determine_ranges(
         args.x_min,
@@ -31,6 +36,7 @@ pub fn run(args: PlotArgs) -> Result<(), Box<dyn Error>> {
         args.y_max,
         equation_bounds,
     );
+
 
     let mut canvas: Vec<Vec<Option<Color>>> = vec![vec![None; WIDTH]; HEIGHT];
 

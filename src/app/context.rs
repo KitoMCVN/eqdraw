@@ -25,7 +25,8 @@ pub fn create_math_context() -> Result<Context<'static>, Error> {
     ctx.func("tanh", |x| x.tanh());
 
     ctx.func("ln", |x| x.ln());
-    ctx.func2("log", |x, r| x.log(r));
+    ctx.func("log", |x| x.log10());
+    ctx.func2("logb", |x, b| x.log(b));
 
     // Rounding Functions
     ctx.func("floor", |x| x.floor());

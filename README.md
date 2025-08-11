@@ -74,8 +74,9 @@ Equations must follow the format `y=<expression_in_x>`.
 | `sinh(x)` | The hyperbolic sine of x |
 | `cosh(x)` | The hyperbolic cosine of x |
 | `tanh(x)` | The hyperbolic tangent of x |
-| `ln(x)` | The natural logarithm of x |
-| `log(x, b)`| The logarithm of x with base b |
+| `ln(x)` | The natural logarithm of x (base e) |
+| `log(x)` | The base-10 logarithm of x |
+| `logb(x, b)`| The logarithm of x with base b |
 | `floor(x)`| Rounds x down to the nearest integer |
 | `ceil(x)` | Rounds x up to the nearest integer |
 | `round(x)`| Rounds x to the nearest integer |
