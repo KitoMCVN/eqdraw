@@ -1,5 +1,5 @@
 use clap::Parser;
-use eqdraw::{PlotArgs, run};
+use eqdraw::{run, PlotArgs};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
