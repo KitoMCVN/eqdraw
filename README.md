@@ -1,6 +1,6 @@
 **eqdraw** is a simple yet powerful command-line tool that lets you visualize mathematical functions directly in your terminal using Unicode characters.
 
-![eqdraw screenshot](https://cdn.discordapp.com/attachments/1398189355528487044/1404306116661477506/Screenshot_2025-08-11-10-28-53-822_com.android.chrome.png?ex=689ab57c&is=689963fc&hm=244c195fd1ef011d184afcf5b96f056c81aa8b6c430093b55a49a6ee3513e709&)
+![eqdraw screenshot](screenshot/eqdraw.png)
 
 ## ⚙️ Install
 
@@ -85,7 +85,7 @@ Equations must follow the format `y=<expression_in_x>`.
 
 | Option | Alias | Description |
 | :--- | :--- | :--- |
-| `--query <QUERY>` | `-q` | The equation to plot. Can be used multiple times. |
+| `----queries <equation>` | `-q` | The equation to plot. Can be used multiple times. |
 | `--xmin <XMIN>` | | Minimum value for the x-axis. |
 | `--xmax <XMAX>` | | Maximum value for the x-axis. |
 | `--ymin <YMIN>` | | Minimum value for the y-axis. |
