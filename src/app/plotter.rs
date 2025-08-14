@@ -26,7 +26,7 @@ pub fn run(args: PlotArgs) -> Result<(), Box<dyn Error>> {
 
     if equation_bounds.is_none() && args.x_min.is_none() && args.x_max.is_none() {
         eprintln!("Could not automatically determine the plot range for the given equation(s).\nThe function might be undefined in the default sampling range [-10, 10].\nPlease specify the range manually using --xmin and --xmax.");
-        return Ok(())
+        return Ok(());
     }
 
     let (x_min, x_max, y_min, y_max) = determine_ranges(
@@ -36,7 +36,6 @@ pub fn run(args: PlotArgs) -> Result<(), Box<dyn Error>> {
         args.y_max,
         equation_bounds,
     );
-
 
     let mut canvas: Vec<Vec<Option<Color>>> = vec![vec![None; WIDTH]; HEIGHT];
 
@@ -103,7 +102,12 @@ fn find_equation_bounds(
         y_max = y_max.max(*y);
     }
 
-    Ok(Some(BoundingBox { x_min, x_max, y_min, y_max }))
+    Ok(Some(BoundingBox {
+        x_min,
+        x_max,
+        y_min,
+        y_max,
+    }))
 }
 
 fn determine_ranges(
@@ -113,52 +117,50 @@ fn determine_ranges(
     arg_y_max: Option<f64>,
     bounds: Option<BoundingBox>,
 ) -> (f64, f64, f64, f64) {
-    let mut x_min = arg_x_min;
-    let mut x_max = arg_x_max;
-    let mut y_min = arg_y_min;
-    let mut y_max = arg_y_max;
+    let mut final_x_min;
+    let mut final_x_max;
+    let mut final_y_min;
+    let mut final_y_max;
+
+    let aspect_ratio = 2.0; // Terminal characters are roughly twice as tall as they are wide
 
     if let Some(b) = bounds {
-        if x_min.is_none() {
-            x_min = Some(b.x_min - (b.x_max - b.x_min).abs() * 0.1);
-        }
-        if x_max.is_none() {
-            x_max = Some(b.x_max + (b.x_max - b.x_min).abs() * 0.1);
-        }
-        if y_min.is_none() {
-            y_min = Some(b.y_min - (b.y_max - b.y_min).abs() * 0.1);
-        }
-        if y_max.is_none() {
-            y_max = Some(b.y_max + (b.y_max - b.y_min).abs() * 0.1);
-        }
-    }
+        final_x_min = arg_x_min.unwrap_or(b.x_min);
+        final_x_max = arg_x_max.unwrap_or(b.x_max);
+        final_y_min = arg_y_min.unwrap_or(b.y_min);
+        final_y_max = arg_y_max.unwrap_or(b.y_max);
 
-    let mut final_x_min = x_min.unwrap_or(DEFAULT_X_MIN);
-    let mut final_x_max = x_max.unwrap_or(DEFAULT_X_MAX);
-    let mut final_y_min = y_min.unwrap_or(DEFAULT_Y_MIN);
-    let mut final_y_max = y_max.unwrap_or(DEFAULT_Y_MAX);
+        let x_span = final_x_max - final_x_min;
+        let y_span = final_y_max - final_y_min;
 
-    let x_span = final_x_max - final_x_min;
-    let y_span = final_y_max - final_y_min;
-
-    let desired_y_span = x_span / 2.0; 
-
-    if y_span < desired_y_span {
-        let y_center = (final_y_max + final_y_min) / 2.0;
-        final_y_min = y_center - desired_y_span / 2.0;
-        final_y_max = y_center + desired_y_span / 2.0;
+        // Auto-adjust y-axis if not manually set
+        if arg_y_min.is_none() && arg_y_max.is_none() {
+            let desired_y_span = x_span / aspect_ratio;
+            if y_span > desired_y_span {
+                // If the function crosses the y-axis, center the view on y=0
+                if final_y_min * final_y_max < 0.0 {
+                    let y_center = 0.0;
+                    final_y_min = y_center - desired_y_span / 2.0;
+                    final_y_max = y_center + desired_y_span / 2.0;
+                } else {
+                    // Otherwise, anchor the view to the point closest to y=0
+                    if final_y_min.abs() < final_y_max.abs() {
+                        final_y_max = final_y_min + desired_y_span;
+                    } else {
+                        final_y_min = final_y_max - desired_y_span;
+                    }
+                }
+            }
+        }
     } else {
-        let x_center = (final_x_max + final_x_min) / 2.0;
-        let desired_x_span = y_span * 2.0;
-        final_x_min = x_center - desired_x_span / 2.0;
-        final_x_max = x_center + desired_x_span / 2.0;
+        // Fallback to defaults if no bounds could be determined
+        final_x_min = arg_x_min.unwrap_or(DEFAULT_X_MIN);
+        final_x_max = arg_x_max.unwrap_or(DEFAULT_X_MAX);
+        final_y_min = arg_y_min.unwrap_or(DEFAULT_Y_MIN);
+        final_y_max = arg_y_max.unwrap_or(DEFAULT_Y_MAX);
     }
 
-    final_x_min = final_x_min.min(0.0);
-    final_x_max = final_x_max.max(0.0);
-    final_y_min = final_y_min.min(0.0);
-    final_y_max = final_y_max.max(0.0);
-
+    // Ensure the range is not a single point
     if final_x_min == final_x_max {
         final_x_min -= 1.0;
         final_x_max += 1.0;
@@ -166,6 +168,20 @@ fn determine_ranges(
     if final_y_min == final_y_max {
         final_y_min -= 1.0;
         final_y_max += 1.0;
+    }
+
+    // Ensure the origin is included in the view if not manually specified
+    if arg_x_min.is_none() {
+        final_x_min = final_x_min.min(0.0);
+    }
+    if arg_x_max.is_none() {
+        final_x_max = final_x_max.max(0.0);
+    }
+    if arg_y_min.is_none() {
+        final_y_min = final_y_min.min(0.0);
+    }
+    if arg_y_max.is_none() {
+        final_y_max = final_y_max.max(0.0);
     }
 
     (final_x_min, final_x_max, final_y_min, final_y_max)
@@ -190,13 +206,19 @@ fn plot_equation(
         let y = expr.eval_with_context(&mut context)?;
 
         if y.is_finite() {
-            let j = ((y_max - y) / (y_max - y_min) * (HEIGHT - 1) as f64).round() as isize;
-            let current_point = (i as isize, j);
+            let j_f64 = (y_max - y) / (y_max - y_min) * (HEIGHT - 1) as f64;
 
-            if let Some(last) = last_point {
-                draw_line(canvas, last, current_point, color);
+            if j_f64.abs() < 1_000_000.0 {
+                let j = j_f64.round() as isize;
+                let current_point = (i as isize, j);
+
+                if let Some(last) = last_point {
+                    draw_line(canvas, last, current_point, color);
+                }
+                last_point = Some(current_point);
+            } else {
+                last_point = None;
             }
-            last_point = Some(current_point);
         } else {
             last_point = None;
         }
