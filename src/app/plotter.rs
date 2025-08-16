@@ -69,7 +69,7 @@ fn find_equation_bounds(
     context_template: &Context,
 ) -> Result<Option<BoundingBox>, Box<dyn Error>> {
     let mut finite_points = Vec::new();
-    let sample_points = (-100..=100).map(|i| i as f64 * 0.1); // -10 to 10, step 0.1
+    let sample_points = (-100..=100).map(|i| i as f64 * 0.1);
 
     for query in queries {
         if let Some(equation) = query.strip_prefix("y=") {
