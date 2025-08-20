@@ -64,16 +64,14 @@ Equations must follow the format `y=<expression_in_x>`.
 | `pow(b, e)`| b raised to the power of e |
 | `root(x, n)`| The nth root of x |
 | `abs(x)` | The absolute value of x |
-| `sin(x)` | The sine of x (x in radians) |
-| `cos(x)` | The cosine of x (x in radians) |
-| `tan(x)` | The tangent of x (x in radians) |
-| `cot(x)` | The cotangent of x (x in radians) |
-| `asin(x)` | The arcsine of x |
-| `acos(x)` | The arccosine of x |
-| `atan(x)` | The arctangent of x |
-| `sinh(x)` | The hyperbolic sine of x |
-| `cosh(x)` | The hyperbolic cosine of x |
-| `tanh(x)` | The hyperbolic tangent of x |
+| `sin(x)`, `cos(x)`, `tan(x)` | Basic trigonometric functions |
+| `cot(x)`, `sec(x)`, `csc(x)` | Cotangent, secant, cosecant |
+| `asin(x)`, `acos(x)`, `atan(x)` | Inverse trigonometric functions (arcsin, etc.) |
+| `acot(x)`, `asec(x)`, `acsc(x)` | Arccotangent, arcsecant, arccosecant |
+| `sinh(x)`, `cosh(x)`, `tanh(x)` | Hyperbolic functions |
+| `coth(x)`, `sech(x)`, `csch(x)` | Hyperbolic cotangent, secant, cosecant |
+| `asinh(x)`, `acosh(x)`, `atanh(x)`| Inverse hyperbolic functions (arsinh, etc.) |
+| `acoth(x)`, `asech(x)`, `acsch(x)`| Inverse hyperbolic cotangent, secant, cosecant |
 | `ln(x)` | The natural logarithm of x (base e) |
 | `log(x)` | The base-10 logarithm of x |
 | `logb(x, b)`| The logarithm of x with base b |
