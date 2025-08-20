@@ -12,7 +12,6 @@ pub fn create_math_context() -> Result<Context<'static>, Error> {
     ctx.func2("root", |x, n| x.powf(1.0 / n));
     ctx.func("abs", |x| x.abs());
 
-    // Basic
     ctx.func("sin", |x| x.sin());
     ctx.func("cos", |x| x.cos());
     ctx.func("tan", |x| x.tan());
@@ -20,7 +19,6 @@ pub fn create_math_context() -> Result<Context<'static>, Error> {
     ctx.func("sec", |x| 1.0 / x.cos());
     ctx.func("csc", |x| 1.0 / x.sin());
 
-    // Inverse (arc)
     ctx.func("asin", |x| x.asin());
     ctx.func("acos", |x| x.acos());
     ctx.func("atan", |x| x.atan());
@@ -34,7 +32,6 @@ pub fn create_math_context() -> Result<Context<'static>, Error> {
     ctx.func("arcsec", |x| (1.0/x).acos());
     ctx.func("arccsc", |x| (1.0/x).asin());
 
-    // Hyperbolic
     ctx.func("sinh", |x| x.sinh());
     ctx.func("cosh", |x| x.cosh());
     ctx.func("tanh", |x| x.tanh());
@@ -42,7 +39,6 @@ pub fn create_math_context() -> Result<Context<'static>, Error> {
     ctx.func("sech", |x| 1.0 / x.cosh());
     ctx.func("csch", |x| 1.0 / x.sinh());
 
-    // Inverse Hyperbolic
     ctx.func("asinh", |x| x.asinh());
     ctx.func("acosh", |x| x.acosh());
     ctx.func("atanh", |x| x.atanh());
